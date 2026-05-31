@@ -44,7 +44,7 @@ def get_weather(city):
         return f"查询天气失败: {e}"
 
 
-register(
+registry.register(
     name="get_weather",
     description="查询指定城市的实时天气信息。",
     parameters={

@@ -57,7 +57,7 @@ def web_search(query, count=5):
         return f"搜索失败: {e}"
 
 
-register(
+registry.register(
     name="web_search",
     description="使用 DuckDuckGo 搜索引擎进行网页搜索，获取实时信息。",
     parameters={

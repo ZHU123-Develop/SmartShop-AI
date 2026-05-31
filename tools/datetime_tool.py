@@ -1,6 +1,7 @@
 """时间日期工具 - 获取当前时间和日期。"""
 
-from datetime import datetime, timezone, zoneinfo
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from . import registry
 
 
@@ -15,9 +16,9 @@ def get_current_time(timezone_name=None):
     """
     try:
         if timezone_name:
-            tz = zoneinfo.ZoneInfo(timezone_name)
+            tz = ZoneInfo(timezone_name)
         else:
-            tz = zoneinfo.ZoneInfo("Asia/Shanghai")
+            tz = ZoneInfo("Asia/Shanghai")
         now = datetime.now(tz)
         return (
             f"当前时间: {now.strftime('%Y年%m月%d日 %H:%M:%S')}\n"
@@ -28,7 +29,7 @@ def get_current_time(timezone_name=None):
         return f"获取时间失败: {e}"
 
 
-register(
+registry.register(
     name="get_current_time",
     description="获取当前日期和时间。可指定时区。",
     parameters={

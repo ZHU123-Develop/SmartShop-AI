@@ -57,7 +57,7 @@ def calculate(expression):
         return f"计算错误: {e}"
 
 
-register(
+registry.register(
     name="calculate",
     description="计算数学表达式的结果。支持加减乘除、幂运算。",
     parameters={
