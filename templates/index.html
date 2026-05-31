@@ -19,7 +19,7 @@
             <!-- 历史会话列表由 JS 动态生成 -->
         </div>
         <div class="sidebar-footer">
-            <div class="footer-item" title="设置">
+            <div class="footer-item" onclick="openSettings()" title="设置">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </div>
         </div>
@@ -38,7 +38,7 @@
                 </svg>
             </div>
             <h1 class="welcome-title">AI 对话助手</h1>
-            <p class="welcome-subtitle">基于 DeepSeek，支持工具调用</p>
+            <p class="welcome-subtitle">支持多种 AI 模型，支持工具调用</p>
             <div class="feature-cards">
                 <div class="feature-card">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 0l-3 3m3-3l3 3"/><path d="M20.3 18.9a8.5 8.5 0 1 1-12.6-12.6"/></svg>
@@ -80,6 +80,66 @@
 
     <!-- 移动端侧边栏遮罩 -->
     <div class="sidebar-overlay hidden" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-overlay hidden" id="settings-overlay" onclick="closeSettings()"></div>
+    <div class="settings-modal hidden" id="settings-modal">
+        <div class="settings-header">
+            <h2>设置</h2>
+            <button class="modal-close" onclick="closeSettings()" title="关闭">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="settings-body">
+            <!-- API 提供商 -->
+            <div class="settings-section">
+                <label class="settings-label">AI 提供商</label>
+                <select id="setting-provider" onchange="onProviderChange()">
+                    <option value="">-- 请选择 --</option>
+                </select>
+            </div>
+
+            <!-- API Key -->
+            <div class="settings-section">
+                <label class="settings-label">API Key</label>
+                <input type="password" id="setting-api-key" class="settings-input" placeholder="输入你的 API Key">
+            </div>
+
+            <!-- Base URL -->
+            <div class="settings-section">
+                <label class="settings-label">API 地址 (Base URL)</label>
+                <input type="text" id="setting-base-url" class="settings-input" placeholder="https://api.deepseek.com/v1">
+            </div>
+
+            <!-- 模型 -->
+            <div class="settings-section">
+                <label class="settings-label">模型</label>
+                <select id="setting-model" class="settings-input">
+                    <option value="">-- 请先选择提供商 --</option>
+                </select>
+            </div>
+
+            <!-- 搜索引擎 -->
+            <div class="settings-section">
+                <label class="settings-label">搜索引擎</label>
+                <select id="setting-search" class="settings-input">
+                    <option value="bing">Bing 搜索</option>
+                    <option value="duckduckgo">DuckDuckGo（需翻墙）</option>
+                </select>
+            </div>
+
+            <!-- 工具支持提示 -->
+            <div class="settings-section">
+                <div class="settings-info" id="settings-info">
+                    选择 AI 提供商后，将显示工具调用支持状态。
+                </div>
+            </div>
+        </div>
+        <div class="settings-footer">
+            <button class="btn-cancel" onclick="closeSettings()">取消</button>
+            <button class="btn-save" onclick="saveSettings()">保存设置</button>
+        </div>
+    </div>
 
     <script src="/static/app.js"></script>
 </body>
