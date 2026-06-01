@@ -5,15 +5,19 @@ import os
 import sqlite3
 import time
 import uuid
-from flask import Flask, request, jsonify, render_template, Response, g
+import mimetypes
+from flask import Flask, request, jsonify, render_template, Response, g, send_file
 from deepseek_client import chat_stream
 
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
 
 # 配置文件路径
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chatbot.db")
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # 跟踪正在进行的流式请求，用于停止生成
 active_streams = {}
@@ -37,7 +41,7 @@ MODEL_PRESETS = {
     "zhipu": {
         "name": "智谱 AI (GLM)",
         "base_url": "https://open.bigmodel.cn/api/paas/v4",
-        "models": ["glm-4-flash", "glm-4", "glm-4-plus"],
+        "models": ["glm-4-flash"],
         "supports_tools": False,
     },
     "qwen": {
@@ -258,8 +262,8 @@ def chat():
     # 从数据库加载历史
     history = db_get_messages(session_id)
 
-    # 标记此请求为活跃
-    request_key = uuid.uuid4().hex
+    # 使用客户端提供的 stop_key，或自动生成
+    request_key = data.get("stop_key") or uuid.uuid4().hex
     active_streams[request_key] = {"abort": False}
 
     def generate():
@@ -301,6 +305,63 @@ def stop_generation(request_key):
     if request_key in active_streams:
         active_streams[request_key]["abort"] = True
     return jsonify({"success": True})
+
+
+# ========== 文件上传 ==========
+ALLOWED_EXTENSIONS = {"txt", "pdf", "png", "jpg", "jpeg", "gif", "doc", "docx"}
+
+
+def allowed_file(filename):
+    """检查文件扩展名是否允许。"""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    """接收文件上传，返回文件信息供对话使用。"""
+    if "file" not in request.files:
+        return jsonify({"success": False, "error": "未找到文件"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "未选择文件"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"success": False, "error": f"不支持的文件类型: {file.filename}"}), 400
+
+    try:
+        # 生成安全文件名
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        safe_name = f"{uuid.uuid4().hex}.{ext}"
+        file_path = os.path.join(UPLOAD_FOLDER, safe_name)
+        file.save(file_path)
+
+        file_size = os.path.getsize(file_path)
+        mime_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+
+        # 对于文本文件，直接读取内容返回
+        if ext == "txt":
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                text = f.read()[:4000]  # 限制长度
+            return jsonify({
+                "success": True,
+                "filename": file.filename,
+                "file_type": "text",
+                "content": text,
+                "size": file_size,
+            })
+
+        # 对于 PDF/图片，返回文件信息（前端可以决定如何展示）
+        return jsonify({
+            "success": True,
+            "filename": file.filename,
+            "file_type": "binary",
+            "mime_type": mime_type,
+            "size": file_size,
+            "message": f"文件 '{file.filename}' 已上传 ({file_size} 字节)，请在对话中引用。",
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": f"上传失败: {e}"}), 500
 
 
 if __name__ == "__main__":

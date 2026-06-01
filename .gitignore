@@ -1,1 +1,16 @@
 __pycache__/
+*.pyc
+
+# IDE
+.atomcode/
+.vscode/
+.idea/
+
+# Runtime data
+chatbot.db
+uploads/
+settings.json
+
+# OS
+.DS_Store
+Thumbs.db

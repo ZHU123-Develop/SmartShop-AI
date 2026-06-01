@@ -30,12 +30,13 @@ def get_config():
     api_key = os.environ.get("LLM_API_KEY") or settings.get("api_key") or DEFAULT_API_KEY
     base_url = os.environ.get("LLM_BASE_URL") or settings.get("base_url") or DEFAULT_BASE_URL
     model = os.environ.get("LLM_MODEL") or settings.get("model") or DEFAULT_MODEL
-    return api_key, base_url, model
+    search_provider = settings.get("search_provider", "bing")
+    return api_key, base_url, model, search_provider
 
 
 def create_client():
     """根据当前配置创建 OpenAI 客户端。"""
-    api_key, base_url, _ = get_config()
+    api_key, base_url, _, _ = get_config()
     if not api_key:
         raise RuntimeError("未配置 API Key，请在设置中填写")
     return OpenAI(api_key=api_key, base_url=base_url)
@@ -48,18 +49,30 @@ SYSTEM_PROMPT = (
 )
 
 
-def _handle_tool_calls(messages, client, model):
+def _filter_tools(search_provider):
+    """根据搜索提供商过滤工具列表。"""
+    all_tools = get_all_tools()
+    if search_provider == "duckduckgo":
+        # 移除 bing_search，保留 duckduckgo_search
+        return [t for t in all_tools if t["function"]["name"] != "web_search"]
+    else:
+        # 移除 duckduckgo_search，保留 bing_search
+        return [t for t in all_tools if t["function"]["name"] != "duckduckgo_search"]
+
+
+def _handle_tool_calls(messages, client, model, search_provider="bing"):
     """处理工具调用循环。非流式，最多 5 轮。
 
     Args:
         messages: 对话消息列表（会被修改）
         client: OpenAI 客户端实例
         model: 模型名称
+        search_provider: 搜索提供商 ("bing" 或 "duckduckgo")
 
     Returns:
         str: AI 的最终回复内容，或错误信息
     """
-    tools = get_all_tools()
+    tools = _filter_tools(search_provider)
 
     for _ in range(5):
         response = client.chat.completions.create(
@@ -129,7 +142,7 @@ def chat_stream(message, history=None):
     if history is None:
         history = []
 
-    api_key, base_url, model = get_config()
+    api_key, base_url, model, search_provider = get_config()
     client = create_client()
 
     messages = [
@@ -141,7 +154,7 @@ def chat_stream(message, history=None):
     # 第一阶段：处理工具调用（如果模型支持）
     if _supports_tool_calling(model):
         try:
-            final_content = _handle_tool_calls(messages, client, model)
+            final_content = _handle_tool_calls(messages, client, model, search_provider)
 
             # 过滤掉工具调用相关的消息，只保留用户/助手对话
             clean_messages = [
