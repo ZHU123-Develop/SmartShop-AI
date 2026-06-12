@@ -1,5 +1,9 @@
 """工具注册中心 - 统一管理所有可被 AI 调用的工具。"""
 
+import logging
+
+logger = logging.getLogger("smartshop.tools")
+
 _registry = {}
 
 
@@ -48,4 +52,5 @@ def execute_tool(name, **kwargs):
     try:
         return str(tool["handler"](**kwargs))
     except Exception as e:
+        logger.error("工具 '%s' 执行出错: %s", name, e, exc_info=True)
         return f"工具 '{name}' 执行出错: {e}"

@@ -344,7 +344,7 @@ body {
 }
 
 .history-item .delete-btn:hover {
-    color: var(--error);
+    color: var(--text-error);
     background: rgba(244, 67, 54, 0.1);
 }
 

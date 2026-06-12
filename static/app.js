@@ -818,7 +818,12 @@ const App = {
             return this.escapeHtml(text).replace(/\n/g, '<br>');
         }
         this._configureMarked();
-        return marked.parse(text);
+        const html = marked.parse(text);
+        // 使用 DOMPurify 防止 LLM 生成的恶意内容导致 XSS
+        if (typeof DOMPurify !== "undefined") {
+            return DOMPurify.sanitize(html);
+        }
+        return html;
     },
 
     escapeHtml(text) {

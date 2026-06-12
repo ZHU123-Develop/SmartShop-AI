@@ -7,7 +7,7 @@ import time
 import uuid
 import mimetypes
 from flask import Flask, request, jsonify, render_template, Response, g, send_file
-from deepseek_client import chat_stream
+from deepseek_client import chat_stream, _set_vector_store
 
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex
@@ -18,6 +18,17 @@ SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settin
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chatbot.db")
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# 初始化 RAG 知识库向量存储
+try:
+    from rag.vector_store import VectorStore
+    _vector_store = VectorStore()
+    _set_vector_store(_vector_store)
+except ImportError:
+    # chromadb 未安装时静默跳过
+    pass
+except Exception:
+    pass
 
 # 跟踪正在进行的流式请求，用于停止生成
 active_streams = {}
