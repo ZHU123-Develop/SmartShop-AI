@@ -7,7 +7,7 @@ import time
 import uuid
 import mimetypes
 from flask import Flask, request, jsonify, render_template, Response, g, send_file
-from deepseek_client import chat_stream, _set_vector_store
+from ai_client import chat_stream, _set_vector_store
 
 app = Flask(__name__)
 app.secret_key = uuid.uuid4().hex

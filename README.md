@@ -101,7 +101,7 @@ python app.py
 
 ```
 app.py                  # Flask 主入口，路由与会话管理
-deepseek_client.py      # AI 客户端（RAG + 工具调用 + 流式对话）
+ai_client.py            # AI 客户端（RAG + 工具调用 + 流式对话）
 tools/                  # 工具注册中心与各工具实现
   registry.py           # 工具注册与执行中心
   calculator.py         # 数学计算器
