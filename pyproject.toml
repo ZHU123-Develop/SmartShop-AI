@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "smartshop-ai"
+version = "1.0.0"
+description = "AI-powered e-commerce customer service chatbot with multi-model support, RAG knowledge base, and tool calling"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "ZHU123-Develop"},
+]
+keywords = ["ai", "chatbot", "ecommerce", "customer-service", "flask", "rag"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Flask",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "flask>=3.1.0",
+    "openai>=1.60.0,<2.0.0",
+    "requests>=2.32.3",
+]
+
+[project.optional-dependencies]
+rag = [
+    "chromadb>=0.5.0",
+]
+doc = [
+    "python-docx>=1.1.0",
+    "PyMuPDF>=1.24.0",
+    "pdfplumber>=0.10.4",
+]
+all = [
+    "chromadb>=0.5.0",
+    "python-docx>=1.1.0",
+    "PyMuPDF>=1.24.0",
+    "pdfplumber>=0.10.4",
+]
+
+[tool.setuptools.packages.find]
+include = ["tools*", "rag*"]

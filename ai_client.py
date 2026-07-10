@@ -71,6 +71,9 @@ DEFAULT_API_KEY = ""
 DEFAULT_BASE_URL = "https://api.deepseek.com/v1"
 DEFAULT_MODEL = "deepseek-chat"
 
+# 工具调用最大轮次，防止无限循环
+MAX_TOOL_CALLS = 5
+
 
 def _load_settings():
     """从配置文件加载设置。"""
@@ -171,7 +174,7 @@ def _handle_tool_calls(messages, client, model, search_provider="bing"):
     """
     tools = _filter_tools(search_provider)
 
-    for _ in range(5):
+    for _ in range(MAX_TOOL_CALLS):
         response = client.chat.completions.create(
             model=model,
             messages=messages,

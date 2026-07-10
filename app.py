@@ -6,6 +6,7 @@ import sqlite3
 import time
 import uuid
 import mimetypes
+from functools import wraps
 from flask import Flask, request, jsonify, render_template, Response, g, send_file
 from ai_client import chat_stream, _set_vector_store
 
@@ -32,6 +33,29 @@ except Exception:
 
 # 跟踪正在进行的流式请求，用于停止生成
 active_streams = {}
+
+# 简易速率限制
+_rate_limit_store = {}
+_RATE_LIMIT = 20  # 每分钟最多请求数
+
+
+def rate_limit(f):
+    """简易 IP 速率限制装饰器。"""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        ip = request.remote_addr or "unknown"
+        now = time.time()
+        window = 60  # 1 分钟窗口
+
+        # 清理过期记录
+        _rate_limit_store[ip] = [t for t in _rate_limit_store.get(ip, []) if now - t < window]
+
+        if len(_rate_limit_store[ip]) >= _RATE_LIMIT:
+            return jsonify({"success": False, "error": "请求过于频繁，请稍后再试"}), 429
+
+        _rate_limit_store[ip].append(now)
+        return f(*args, **kwargs)
+    return decorated
 
 # 默认配置
 DEFAULT_SETTINGS = {
@@ -258,6 +282,7 @@ def delete_session(session_id):
 
 
 @app.route("/chat", methods=["POST"])
+@rate_limit
 def chat():
     """接收用户消息，SSE 流式返回 AI 回复。"""
     data = request.get_json()
@@ -376,5 +401,12 @@ def upload_file():
 
 
 if __name__ == "__main__":
+    import sys
+
+    # 命令行参数支持环境切换
+    debug = "--debug" in sys.argv or os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true")
+
+    # 初始化数据库（CLI 或首次启动时使用）
     init_db()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+
+    app.run(debug=debug, host="0.0.0.0", port=5000)
