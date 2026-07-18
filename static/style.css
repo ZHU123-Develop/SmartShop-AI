@@ -245,6 +245,57 @@ body {
     justify-content: center;
 }
 
+/* 折叠按钮 */
+.collapse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.collapse-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+.sidebar.collapsed .collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+.sidebar.collapsed .collapse-btn {
+    position: absolute;
+    right: -14px;
+    top: 20px;
+    width: 28px;
+    height: 28px;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    z-index: 10;
+    box-shadow: var(--shadow-sm);
+}
+
+.sidebar.collapsed .collapse-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+}
+
+/* 侧边栏折叠时的 header 布局 */
+.sidebar.collapsed .sidebar-header {
+    position: relative;
+    justify-content: center;
+    padding: 14px 8px;
+}
+
 .sidebar-history {
     flex: 1;
     overflow-y: auto;
@@ -320,6 +371,16 @@ body {
 .sidebar.collapsed .history-item .history-text {
     opacity: 0;
     width: 0;
+    overflow: hidden;
+}
+
+/* 折叠时隐藏删除按钮和整个历史列表 */
+.sidebar.collapsed .history-item .delete-btn {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-history {
+    display: none;
 }
 
 .history-item .delete-btn {
@@ -331,11 +392,6 @@ body {
     border-radius: 4px;
     transition: all var(--transition-fast);
     opacity: 0;
-}
-
-.sidebar.collapsed .history-item .delete-btn {
-    display: flex;
-    opacity: 1;
 }
 
 .history-item:hover .delete-btn {
@@ -1403,35 +1459,29 @@ body {
     }
 
     .mobile-menu-btn {
-        display: flex !important;
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        z-index: 50;
-        width: 44px;
-        height: 44px;
-        align-items: center;
-        justify-content: center;
-        background: var(--glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-        border-radius: 12px;
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        box-shadow: var(--shadow-md);
-    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
 
-    .mobile-menu-btn:hover {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-        transform: scale(1.05);
-    }
+.mobile-menu-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
 
-    .mobile-menu-btn:active {
-        transform: scale(0.95);
-    }
+.mobile-menu-btn:active {
+    transform: scale(0.95);
+}
 
     .feature-cards {
         grid-template-columns: repeat(2, 1fr);
@@ -1534,15 +1584,15 @@ body {
 /* Dark mode toggle (if needed) */
 @media (prefers-color-scheme: light) {
     :root {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f5f5f7;
-        --bg-tertiary: #e8e8ed;
-        --bg-hover: #d9d9df;
-        --text-primary: #1d1d1f;
-        --text-secondary: #6e6e73;
-        --text-muted: #86868b;
-        --border-color: #d2d2d7;
-        --scrollbar-thumb: #a1a1a6;
+        --bg-primary: #f5f5f0;
+        --bg-secondary: #ecece5;
+        --bg-tertiary: #e2e2db;
+        --bg-hover: #d8d8d0;
+        --text-primary: #2c2c2c;
+        --text-secondary: #6b6b6b;
+        --text-muted: #9a9a9a;
+        --border-color: #d5d5cd;
+        --scrollbar-thumb: #b8b8b0;
     }
 
     .message.assistant {
@@ -1552,6 +1602,104 @@ body {
     .input-wrapper {
         background: rgba(255, 255, 255, 0.8);
     }
+}
+
+/* 手动切换为暗色主题（覆盖 @media prefers-color-scheme 的干扰） */
+[data-theme="dark"] {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-tertiary: #1a1a26;
+    --bg-hover: #1e1e2e;
+    --bg-active: #242438;
+    --bg-elevated: #181828;
+    --text-primary: #e8e8f0;
+    --text-secondary: #9898b0;
+    --text-muted: #585870;
+    --text-success: #4caf50;
+    --text-error: #f44336;
+    --border-color: #26263a;
+    --border-weak: #2a2a3e;
+    --border-glow: rgba(108, 99, 255, 0.3);
+    --accent: #6C63FF;
+    --accent-alt: #E040FB;
+    --accent-hover: #5a52e0;
+    --accent-glow: rgba(108, 99, 255, 0.25);
+    --accent-gradient: linear-gradient(135deg, #6C63FF 0%, #E040FB 100%);
+    --input-bg: rgba(26, 26, 38, 0.8);
+    --input-border: #333355;
+    --input-focus: rgba(108, 99, 255, 0.2);
+    --scrollbar-thumb: #3a3a55;
+    --scrollbar-hover: #4a4a66;
+    --glass-bg: rgba(18, 18, 26, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .message.assistant {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .input-wrapper {
+    background: var(--input-bg);
+}
+
+/* 手动切换为亮色主题（柔和护眼版） */
+[data-theme="light"] {
+    --bg-primary: #f5f5f0;
+    --bg-secondary: #ecece5;
+    --bg-tertiary: #e2e2db;
+    --bg-hover: #d8d8d0;
+    --bg-active: #cdcdc5;
+    --bg-elevated: #e8e8e0;
+    --text-primary: #2c2c2c;
+    --text-secondary: #6b6b6b;
+    --text-muted: #9a9a9a;
+    --text-success: #2e7d32;
+    --text-error: #c62828;
+    --border-color: #d5d5cd;
+    --border-weak: #c8c8c0;
+    --border-glow: rgba(108, 99, 255, 0.2);
+    --input-bg: rgba(255, 255, 255, 0.7);
+    --input-border: #c5c5bd;
+    --input-focus: rgba(108, 99, 255, 0.15);
+    --scrollbar-thumb: #b8b8b0;
+    --scrollbar-hover: #a8a8a0;
+    --glass-bg: rgba(236, 236, 229, 0.8);
+    --glass-border: rgba(0, 0, 0, 0.06);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .message.assistant {
+    background: var(--bg-secondary);
+}
+
+[data-theme="light"] .input-wrapper {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .code-block-wrapper pre {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .content code {
+    background: rgba(0, 0, 0, 0.06);
+    color: #555;
+}
+
+[data-theme="light"] .settings-modal {
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .main-content::before {
+    background: radial-gradient(circle, rgba(108, 99, 255, 0.06) 0%, transparent 70%);
+}
+
+[data-theme="light"] .main-content::after {
+    background: radial-gradient(circle, rgba(224, 64, 251, 0.04) 0%, transparent 70%);
 }
 
 /* ========== Settings Modal ========== */

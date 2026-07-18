@@ -1,12 +1,15 @@
 # Core
-flask==3.1.0
+flask>=3.1.0
 openai>=1.60.0,<2.0.0
-requests==2.32.3
+requests>=2.32.3
 
-# RAG knowledge base (optional: pip install -r requirements.txt with [rag,doc])
+# RAG knowledge base (optional)
 chromadb>=0.5.0
 
 # Document parsing (optional)
 python-docx>=1.1.0
 PyMuPDF>=1.24.0
 pdfplumber>=0.10.4
+
+# Timezone database (for datetime tool)
+tzdata

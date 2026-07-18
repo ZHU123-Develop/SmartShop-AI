@@ -16,10 +16,8 @@ _SAFE_OPS = {
 
 def _eval_node(node):
     """安全地求值 AST 节点。"""
-    if isinstance(node, ast.Constant) and isinstance(node.n if hasattr(node, 'n') else node.value, (int, float)):
-        return node.n if hasattr(node, 'n') else node.value
-    if isinstance(node, ast.Num):  # Python < 3.8
-        return node.n
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
     if isinstance(node, ast.BinOp):
         left = _eval_node(node.left)
         right = _eval_node(node.right)

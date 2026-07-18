@@ -134,8 +134,12 @@ const App = {
         const overlay = this.elements['sidebar-overlay'];
 
         if (window.innerWidth <= 768) {
+            // 手机端：滑出/滑入
             sidebar.classList.toggle('open');
             overlay.classList.toggle('show');
+        } else {
+            // 桌面端：折叠/展开
+            sidebar.classList.toggle('collapsed');
         }
     },
 
@@ -581,6 +585,16 @@ const App = {
         if (baseUrl) baseUrl.value = this.state.currentSettings.base_url || "";
         if (search) search.value = this.state.currentSettings.search_provider || "bing";
 
+        // 回填新增设置字段
+        const serviceName = document.getElementById("setting-service-name");
+        if (serviceName) serviceName.value = this.state.currentSettings.customer_service_name || "SmartShop";
+        const businessHours = document.getElementById("setting-business-hours");
+        if (businessHours) businessHours.value = this.state.currentSettings.business_hours || "9:00-21:00";
+        const kbTopK = document.getElementById("setting-kb-top-k");
+        if (kbTopK) kbTopK.value = this.state.currentSettings.kb_top_k ?? 3;
+        const kbThreshold = document.getElementById("setting-kb-threshold");
+        if (kbThreshold) kbThreshold.value = this.state.currentSettings.kb_similarity_threshold ?? 0.5;
+
         // 根据 base_url 检测提供商
         let detectedProvider = "";
         for (const [key, p] of Object.entries(this.state.modelPresets)) {
@@ -713,6 +727,10 @@ const App = {
             base_url: base_url,
             model: modelValue,
             search_provider: search ? search.value : "bing",
+            customer_service_name: document.getElementById("setting-service-name")?.value.trim() || "SmartShop",
+            business_hours: document.getElementById("setting-business-hours")?.value.trim() || "9:00-21:00",
+            kb_top_k: parseInt(document.getElementById("setting-kb-top-k")?.value) || 3,
+            kb_similarity_threshold: parseFloat(document.getElementById("setting-kb-threshold")?.value) || 0.5,
         };
 
         try {
@@ -736,7 +754,27 @@ const App = {
 
     // ========== 主题 ==========
     applyTheme() {
-        document.body.setAttribute('data-theme', this.state.ui.theme);
+        // 设置到 html 元素（即 :root），确保 CSS 自定义属性正确覆盖
+        document.documentElement.setAttribute('data-theme', this.state.ui.theme);
+        this.updateThemeIcon();
+    },
+
+    updateThemeIcon() {
+        const icon = document.getElementById('theme-icon');
+        if (!icon) return;
+        const isLight = this.state.ui.theme === 'light';
+        // 图标代表"点击后变成什么主题"：暗色时显示太阳（点变亮），亮色时显示月亮（点变暗）
+        if (isLight) {
+            // 当前亮色 → 显示月亮图标（点击变暗）
+            icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        } else {
+            // 当前暗色 → 显示太阳图标（点击变亮）
+            icon.innerHTML = '<circle cx="12" cy="12" r="5"/>'
+                + '<line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>'
+                + '<line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>'
+                + '<line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>'
+                + '<line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+        }
     },
 
     toggleTheme() {

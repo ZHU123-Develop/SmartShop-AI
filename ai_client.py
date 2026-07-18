@@ -28,18 +28,25 @@ def _set_vector_store(store):
     _vector_store = store
 
 
-def _retrieve_context(message, top_k=3, similarity_threshold=0.5):
+def _retrieve_context(message, top_k=None, similarity_threshold=None):
     """从知识库检索相关上下文。
 
     Args:
         message: 用户消息
-        top_k: 返回片段数量
-        similarity_threshold: 最低相似度阈值
+        top_k: 返回片段数量，默认从 settings.json 读取
+        similarity_threshold: 最低相似度阈值，默认从 settings.json 读取
 
     Returns:
         str: 格式化的上下文文本，无结果时返回空字符串
     """
     try:
+        # 从 settings.json 读取知识库参数
+        settings = _load_settings()
+        if top_k is None:
+            top_k = settings.get("kb_top_k", 3)
+        if similarity_threshold is None:
+            similarity_threshold = settings.get("kb_similarity_threshold", 0.5)
+
         store = _get_vector_store()
         if store.count() == 0:
             return ""

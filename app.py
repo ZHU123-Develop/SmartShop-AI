@@ -23,8 +23,31 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # 初始化 RAG 知识库向量存储
 try:
     from rag.vector_store import VectorStore
+    from rag.document_processor import DocumentProcessor
+
     _vector_store = VectorStore()
     _set_vector_store(_vector_store)
+
+    # 自动加载样本知识库（首次启动时）
+    if _vector_store.count() == 0:
+        sample_kb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rag", "sample_kb.txt")
+        if os.path.exists(sample_kb_path):
+            try:
+                processor = DocumentProcessor()
+                result = processor.process_file(sample_kb_path)
+                metadatas = [
+                    {
+                        "source": "sample_kb",
+                        "filename": "sample_kb.txt",
+                        "doc_id": result["doc_id"],
+                        "chunk_index": i,
+                    }
+                    for i in range(result["chunk_count"])
+                ]
+                _vector_store.add_documents(result["chunks"], metadatas=metadatas)
+                print(f"📚 已自动加载样本知识库: {result['chunk_count']} 个片段")
+            except Exception as e:
+                print(f"⚠️ 加载样本知识库失败: {e}")
 except ImportError:
     # chromadb 未安装时静默跳过
     pass
@@ -63,6 +86,10 @@ DEFAULT_SETTINGS = {
     "base_url": "https://api.deepseek.com/v1",
     "model": "deepseek-chat",
     "search_provider": "bing",
+    "kb_top_k": 3,
+    "kb_similarity_threshold": 0.5,
+    "customer_service_name": "SmartShop",
+    "business_hours": "9:00-21:00",
 }
 
 # 预定义模型列表
@@ -252,7 +279,12 @@ def update_settings():
         return jsonify({"success": False, "error": "请提供配置数据"}), 400
 
     settings = load_settings()
-    for key in ["api_key", "base_url", "model", "search_provider"]:
+    allowed_keys = [
+        "api_key", "base_url", "model", "search_provider",
+        "customer_service_name", "business_hours",
+        "kb_top_k", "kb_similarity_threshold",
+    ]
+    for key in allowed_keys:
         if key in data:
             settings[key] = data[key]
 

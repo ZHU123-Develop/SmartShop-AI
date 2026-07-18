@@ -1,155 +1,134 @@
-# 🤖 SmartShop-AI — AI 智能电商客服系统
+<div align="center">
 
-> 一个支持多模型、工具调用和 RAG 知识库检索的 AI 电商智能客服助手。
+# 🤖 SmartShop-AI
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.1-black?logo=flask)](https://flask.palletsprojects.com)
-[![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?logo=openai)](https://openai.com)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+**AI 智能电商客服系统** — 多模型 · 工具调用 · RAG 知识库
+
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&style=flat)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.1-black?logo=flask&style=flat)](https://flask.palletsprojects.com)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-API-4F6BFF?style=flat)](https://deepseek.com)
+[![ChromaDB](https://img.shields.io/badge/ChromaDB-vector-yellow?style=flat)](https://www.trychroma.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 
 ---
 
-## ✨ 功能特性
+**一个开箱即用的 AI 电商客服聊天机器人，支持 7 大 AI 模型、9 种工具调用、RAG 知识库检索，并提供 ChatGPT 风格的前端界面。**
 
-### 🧠 多模型支持
-| 提供商 | 模型 | 工具调用 |
-|--------|------|---------|
-| **DeepSeek** | deepseek-chat, deepseek-coder | ✅ |
-| **智谱 AI (GLM)** | glm-4-flash | ❌ |
-| **通义千问 (Qwen)** | qwen-turbo, qwen-plus, qwen-max, qwen-long | ✅ |
-| **Moonshot (Kimi)** | moonshot-v1-8k ~ 128k | ❌ |
-| **硅基流动** | DeepSeek-V3, Pro/DeepSeek-V3 | ✅ |
-| **OpenAI** | gpt-4o, gpt-4o-mini, gpt-3.5-turbo | ✅ |
-| **自定义** | 任意兼容 OpenAI API 的模型 | 按需 |
+</div>
 
-### 🛠️ 工具调用（Function Calling）
-| 工具 | 功能 | 数据 |
-|------|------|------|
-| 📦 `query_order` | 订单查询 | 模拟数据（6个示例订单） |
-| 📬 `query_logistics` | 物流追踪 | 模拟数据（4条物流单号） |
-| 🔄 `query_return_refund` | 退换货查询 | 模拟数据（4个退换货记录） |
-| 👤 `query_member_info` | 会员信息查询 | 模拟数据（5个会员） |
-| 🌤️ `get_weather` | 实时天气查询 | wttr.in 免费 API |
-| 🔢 `calculate` | 数学计算（安全 AST） | 支持四则运算和幂运算 |
-| ⏰ `get_current_time` | 日期时间查询 | 支持多时区 |
-| 🔍 `web_search` | Bing 网页搜索 | 无需 API Key（HTML 解析） |
-| 🦆 `duckduckgo_search` | DuckDuckGo 搜索 | 无需 API Key（JSON API） |
+## ✨ 核心功能
+
+### 🧠 多模型驱动
+支持 **DeepSeek**、**OpenAI**、**通义千问**、**智谱 GLM**、**Moonshot**、**硅基流动** 等 7 大 AI 提供商，一键切换。
+
+### 🛠️ 9 种智能工具
+| 工具 | 说明 | 数据源 |
+|------|------|--------|
+| 📦 订单查询 | 订单状态、商品信息、物流单号 | 模拟数据 |
+| 📬 物流追踪 | 物流轨迹、进度时间线 | 模拟数据 |
+| 🔄 退换货查询 | 退货进度、退款金额 | 模拟数据 |
+| 👤 会员查询 | 会员等级、积分、升级进度 | 模拟数据 |
+| 🌤️ 天气查询 | 实时天气、温度湿度 | wttr.in 免费 API |
+| 🔢 数学计算 | 安全 AST 解析计算器 | - |
+| ⏰ 日期时间 | 当前时间、时区转换 | - |
+| 🔍 网页搜索 | Bing / DuckDuckGo | 无需 API Key |
+| 🦆 DuckDuckGo | 备选搜索引擎 | JSON API |
 
 ### 📚 RAG 知识库
-- 基于 **ChromaDB** 的向量检索
-- 智能文档分块（支持重叠、段落边界感知）
-- 支持 TXT / PDF / DOCX 格式导入
-- 相似度阈值过滤，确保结果相关性
-- 29 条电商售后 FAQ 内置知识库
+- 基于 **ChromaDB** 向量检索
+- 支持 TXT / PDF / DOCX 导入
+- 智能文档分块（重叠 + 段落感知）
+- **启动自动加载** 29 条电商 FAQ 样本数据
 
 ### 💬 对话体验
-- **SSE 流式输出** — 实时显示 AI 回复
-- **会话管理** — 多会话切换、历史持久化
-- **Markdown 渲染** — 使用 marked.js + DOMPurify
-- **暗色/亮色主题** — 一键切换
-- **文件上传** — 支持 TXT/PDF/图片/DOCX
-- **停止生成** — 随时中断 AI 回复
-- **移动端适配** — 响应式侧边栏
-
----
-
-## 🛠️ 技术栈
-
-| 层级 | 技术 |
-|------|------|
-| **后端** | Python 3.10+, Flask 3.1, OpenAI SDK |
-| **数据库** | SQLite（会话/消息持久化） |
-| **向量存储** | ChromaDB（RAG 知识库） |
-| **前端** | 原生 HTML/CSS/JS (Fetch API, SSE) |
-| **Markdown** | marked.js + DOMPurify（XSS 防护） |
-| **文档解析** | PyMuPDF / pdfplumber / python-docx |
-| **搜索** | Bing / DuckDuckGo（无需 API Key） |
-| **天气** | wttr.in（免费，无需 API Key） |
+- ⚡ **SSE 流式输出** — 实时逐字显示 AI 回复
+- 🌙 **暗色/亮色主题** — 一键切换，柔和护眼色
+- 📋 **侧边栏折叠** — 桌面折叠 / 手机滑出
+- 📎 **文件上传** — 支持 TXT/PDF/图片/DOCX
+- 🛑 **停止生成** — 随时中断 AI 回复
+- 📱 **移动端适配** — 响应式设计
 
 ---
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 前提条件
+- Python 3.10+
+- 一个 AI 模型的 API Key（推荐 [DeepSeek](https://platform.deepseek.com/)）
+
+### 一键安装 + 启动（推荐 uv）
 
 ```bash
-# 基础依赖
-pip install flask openai requests
+# 1. 安装 uv（如未安装）
+pip install uv
 
-# 安装 RAG 知识库支持（可选）
-pip install chromadb
+# 2. 克隆并进入项目
+cd SmartShop-AI
 
-# 安装文档解析支持（可选）
-pip install PyMuPDF pdfplumber python-docx
+# 3. 安装全部依赖（核心 + RAG + 文档解析）
+uv sync --extra all
 
-# 或一键安装全部
-pip install -r requirements.txt
-```
-
-### 2. 配置 API Key
-
-通过环境变量设置（推荐，避免明文存储）：
-
-```bash
-# Windows (PowerShell)
-$env:LLM_API_KEY="your-api-key-here"
+# 4. 配置 API Key（环境变量方式）
+# Windows PowerShell:
+$env:LLM_API_KEY="sk-your-key-here"
 $env:LLM_BASE_URL="https://api.deepseek.com/v1"
 $env:LLM_MODEL="deepseek-chat"
 
-# Linux/Mac
-export LLM_API_KEY="your-api-key-here"
-export LLM_BASE_URL="https://api.deepseek.com/v1"
-export LLM_MODEL="deepseek-chat"
+# Linux/Mac:
+export LLM_API_KEY="sk-your-key-here"
+
+# 5. 启动服务
+uv run python app.py
 ```
 
-或通过网页界面「设置」面板配置。
-
-### 3. 启动服务
+### 使用 pip 安装
 
 ```bash
-# 生产模式
+pip install -r requirements.txt
+pip install chromadb PyMuPDF pdfplumber python-docx tzdata
 python app.py
-
-# 调试模式
-python app.py --debug
-# 或
-$env:FLASK_DEBUG=1; python app.py
 ```
 
-访问 **http://localhost:5000** 🎉
+启动后访问 **http://localhost:5000** 🎉
 
 ---
 
-## 📖 使用指南
+## 🖥️ 使用指南
 
-### 选择模型
-1. 点击左下角⚙️设置按钮
-2. 选择 AI 提供商（如 DeepSeek、OpenAI、智谱等）
+### 配置模型
+1. 点击左下角 **⚙️ 设置** 按钮
+2. 选择 AI 提供商（DeepSeek / OpenAI / 通义千问等）
 3. 输入 API Key 和 API 地址
-4. 选择模型，保存设置
+4. 选择模型，点击保存
 
-### 新对话
-- 点击左侧「新对话」按钮
-- 或点击欢迎页面的功能卡片快速开始
+### 快速开始
+点击欢迎页面的功能卡片，或直接输入问题：
 
-### 查询订单
 ```
+# 订单查询
 查询订单 ORD20240101001
-```
-```
-查一下我的物流单号 SF1234567890
-```
 
-### 查询会员
-```
+# 物流追踪
+查一下物流单号 SF1234567890
+
+# 会员查询
 查询手机号 13800000001 的会员信息
-```
 
-### 使用知识库
-```
+# 天气查询
+北京今天天气怎么样？
+
+# 知识库查询
 你们有什么退换货政策？
 会员等级怎么升级？
 ```
+
+### 设置项说明
+| 设置项 | 说明 | 默认值 |
+|--------|------|--------|
+| 客服名称 | AI 自我介绍时的店铺名 | SmartShop |
+| 营业时间 | 自动回复中的营业时段 | 9:00-21:00 |
+| 知识库返回数量 | 每次检索的片段数 | 3 |
+| 知识库相似度阈值 | 结果相关性过滤 | 0.5 |
 
 ---
 
@@ -157,36 +136,32 @@ $env:FLASK_DEBUG=1; python app.py
 
 ```
 SmartShop-AI/
-├── app.py                    # Flask 主应用（路由 + 数据库 + 设置）
-├── ai_client.py              # AI API 客户端（对话 + 工具调用 + RAG）
-├── settings.json             # 运行时配置（.gitignore 忽略）
-├── requirements.txt          # Python 依赖
-├── pyproject.toml            # 项目元数据
-├── CLAUDE.md                 # AI 辅助开发指南
-├── LICENSE                   # MIT 许可证
+├── app.py                 # Flask 入口（路由/数据库/设置）
+├── ai_client.py           # AI 客户端（对话/工具/RAG）
+├── settings.json          # 运行时配置（已 .gitignore）
 ├── templates/
-│   └── index.html            # 主页面（聊天界面 + 设置面板）
+│   └── index.html         # 页面模板
 ├── static/
-│   ├── style.css             # 全局样式（暗色/亮色主题）
-│   └── app.js                # 前端逻辑（SSE 流式 + 会话管理）
-├── tools/                    # 工具函数（Function Calling）
-│   ├── registry.py           #   工具注册中心
-│   ├── order_query.py        #   订单查询（模拟数据）
-│   ├── logistics_track.py    #   物流追踪（模拟数据）
-│   ├── return_refund.py      #   退换货查询（模拟数据）
-│   ├── member_info.py        #   会员信息查询（模拟数据）
-│   ├── weather.py            #   天气查询（wttr.in API）
-│   ├── calculator.py         #   安全计算器（AST 解析）
-│   ├── datetime_tool.py      #   日期时间工具
-│   ├── bing_search.py        #   Bing 网页搜索
-│   └── duckduckgo_search.py  #   DuckDuckGo 搜索
-├── rag/                      # RAG 知识库模块
-│   ├── vector_store.py       #   ChromaDB 向量存储封装
-│   ├── document_processor.py #   文档解析与分块
-│   └── sample_kb.txt         #   电商 FAQ 知识库样本
-├── rag_data/                 # ChromaDB 持久化数据（.gitignore 忽略）
-├── uploads/                  # 上传文件目录（.gitignore 忽略）
-└── chatbot.db                # SQLite 会话数据库（.gitignore 忽略）
+│   ├── app.js             # 前端逻辑（SSE/会话/主题）
+│   └── style.css          # 全局样式（暗色/亮色主题）
+├── tools/                 # Function Calling 工具集
+│   ├── registry.py        # 工具注册中心
+│   ├── order_query.py     # 订单查询（模拟）
+│   ├── logistics_track.py # 物流追踪（模拟）
+│   ├── return_refund.py   # 退换货查询（模拟）
+│   ├── member_info.py     # 会员信息查询（模拟）
+│   ├── weather.py         # 天气查询（wttr.in）
+│   ├── calculator.py      # 安全计算器（AST）
+│   ├── datetime_tool.py   # 日期时间（时区支持）
+│   ├── bing_search.py     # Bing 网页搜索
+│   └── duckduckgo_search.py # DuckDuckGo 搜索
+├── rag/                   # RAG 知识库模块
+│   ├── vector_store.py    # ChromaDB 封装
+│   ├── document_processor.py # 文档解析与分块
+│   └── sample_kb.txt      # 电商 FAQ 样本（自动加载）
+├── pyproject.toml         # 项目元数据
+├── CLAUDE.md              # AI 辅助开发配置
+└── LICENSE                # MIT 许可证
 ```
 
 ---
@@ -195,81 +170,61 @@ SmartShop-AI/
 
 | 方法 | 路径 | 说明 | 限流 |
 |------|------|------|------|
-| GET | `/` | 主页面 | - |
-| GET | `/settings` | 获取配置和模型列表 | - |
+| GET | `/` | Web 主页面 | - |
+| GET | `/settings` | 获取配置 | - |
 | PUT | `/settings` | 更新配置 | - |
-| GET | `/sessions` | 获取会话列表 | - |
-| GET | `/sessions/<id>` | 获取会话消息 | - |
+| GET | `/sessions` | 会话列表 | - |
+| GET | `/sessions/<id>` | 会话消息 | - |
 | DELETE | `/sessions/<id>` | 删除会话 | - |
-| POST | `/chat` | 发送消息（SSE 流式） | ✅ 20次/分钟 |
+| POST | `/chat` | 发送消息（SSE 流式） | 20次/分钟 |
 | POST | `/stop/<key>` | 停止生成 | - |
 | POST | `/upload` | 上传文件 | - |
 
-### 聊天 API 示例
+### 聊天 API 调用示例
 
 ```bash
 curl -X POST http://localhost:5000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "查询订单 ORD20240101001", "session_id": "abc123"}'
-```
+  -d '{"message": "北京今天天气怎么样？"}'
 
-响应为 SSE 流式格式：
-```
-data: {"type":"chunk","content":"您好"}
-data: {"type":"chunk","content":"！"}
-data: {"type":"done","session_id":"abc123"}
+# 响应（SSE 流式）：
+# data: {"type":"chunk","content":"您好"}
+# data: {"type":"chunk","content":"！"}
+# data: {"type":"done","session_id":"abc123"}
 ```
 
 ---
 
-## 🔒 安全特性
+## 🧪 测试数据（模拟）
 
-- ✅ **API Key 不硬编码** — 支持环境变量 `LLM_API_KEY` 或运行时设置
-- ✅ **DOMPurify 过滤** — 前端 Markdown 渲染防 XSS
-- ✅ **安全计算器** — AST 解析，非 `eval()` 执行
-- ✅ **速率限制** — 聊天接口 20 次/分钟/IP
-- ✅ **文件上传白名单** — 仅允许 txt/pdf/png/jpg/doc/docx
-- ✅ **settings.json 被 Git 忽略** — 避免 API Key 误提交
-- ✅ **SQLite 防注入** — 参数化查询，无字符串拼接
+| 订单号 | 状态 | 快递单号 | 会员手机号 | 退货单号 |
+|--------|------|----------|-----------|----------|
+| ORD20240101001 | 已发货 | SF1234567890 | 13800000001 | RET20240101001 |
+| ORD20240102002 | 待付款 | YZ9876543210 | 13800000002 | RET20240102002 |
+| ORD20240103003 | 已签收 | SF5566778899 | 13800000003 | RET20240103003 |
+| ORD20240104004 | 已付款 | YZ1122334455 | 13800000004 | RET20240104004 |
+| ORD20240105005 | 已退货 | - | 13800000005 | RET20240104004 |
+| ORD20240106006 | 已发货 | - | - | - |
 
 ---
 
-## 🧪 测试数据
+## 🔒 安全
 
-### 订单号
-| 订单号 | 状态 | 客户 |
-|--------|------|------|
-| ORD20240101001 | 已发货 | 张示例 |
-| ORD20240102002 | 待付款 | 李示例 |
-| ORD20240103003 | 已签收 | 王示例 |
-| ORD20240104004 | 已付款 | 赵示例 |
-| ORD20240105005 | 已退货 | 张示例 |
-| ORD20240106006 | 已发货 | 孙示例 |
+- ✅ API Key 仅存于 `settings.json`（被 `.gitignore` 忽略）或环境变量
+- ✅ 前端 Markdown 渲染经 **DOMPurify** 过滤 XSS
+- ✅ 数学计算使用 **AST 解析**，非 `eval()`
+- ✅ 聊天接口 **20 次/分钟** 速率限制
+- ✅ 文件上传 **白名单** 过滤
+- ✅ SQLite **参数化查询** 防注入
 
-### 快递单号
-| 单号 | 快递公司 |
-|------|---------|
-| SF1234567890 | 顺丰 |
-| YZ9876543210 | 邮政 |
-| SF5566778899 | 顺丰（退货） |
-| YZ1122334455 | 邮政 |
+---
 
-### 会员手机号
-| 手机号 | 等级 |
-|--------|------|
-| 13800000001 | 黄金会员 |
-| 13800000002 | 普通会员 |
-| 13800000003 | 白银会员 |
-| 13800000004 | 钻石会员 |
-| 13800000005 | 黄金会员 |
+## 📊 项目统计
 
-### 退货单号
-| 单号 | 状态 |
-|------|------|
-| RET20240101001 | 退款已处理 |
-| RET20240102002 | 审核中 |
-| RET20240103003 | 同意换货 |
-| RET20240104004 | 已退货待审核 |
+- **总代码量**: ~5,400 行
+- **Python**: ~1,900 行（16 个模块）
+- **JavaScript**: ~1,100 行
+- **CSS**: ~2,200 行（暗色/亮色双主题）
 
 ---
 
@@ -279,6 +234,6 @@ data: {"type":"done","session_id":"abc123"}
 
 ---
 
-<p align="center">
-  <sub>Built with ❤️ — 多模型 AI 电商客服系统</sub>
-</p>
+<div align="center">
+  <sub>Built with ❤️ by ZHU123-Develop — 多模型 AI 电商客服系统</sub>
+</div>
