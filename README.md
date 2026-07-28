@@ -68,7 +68,7 @@ cd SmartShop-AI
 # 3. 安装全部依赖（核心 + RAG + 文档解析）
 uv sync --extra all
 
-# 4. 配置 API Key（环境变量方式）
+# 4. 配置 API Key（推荐环境变量方式，更安全）
 # Windows PowerShell:
 $env:LLM_API_KEY="sk-your-key-here"
 $env:LLM_BASE_URL="https://api.deepseek.com/v1"
@@ -90,6 +90,9 @@ python app.py
 ```
 
 启动后访问 **http://localhost:5000** 🎉
+
+> ⚠️ **安全提示**: 强烈建议通过环境变量 `LLM_API_KEY` 配置 API Key，而不是写入 `settings.json`。  
+> 如果使用 `settings.json`，请确保该文件已被 `.gitignore` 忽略，避免误提交到 GitHub。
 
 ---
 
@@ -132,29 +135,43 @@ python app.py
 
 ---
 
+## 📝 最近更新
+
+### v1.1.0 (2026-07-28)
+- 🔒 **安全增强**: 启动时检测 API Key 来源，提示使用环境变量替代 settings.json
+- 🔄 **工具调用优化**: 添加去重检测，防止 AI 重复调用同一工具导致无限循环
+- 🎯 **搜索提供商生效**: 修复 `search_provider` 配置项未生效的问题（现在 bing/duckduckgo 二选一）
+- 🧠 **模型配置统一**: `_supports_tool_calling` 改用 `MODEL_PRESETS` 配置，消除硬编码
+- 🏷️ **类型注解**: 核心函数添加完整类型注解（`Generator`, `Optional`, `Callable` 等）
+- ⚡ **线程安全**: 速率限制器添加 `threading.Lock()` 保护
+- 📦 **数据库性能**: 会话列表查询添加 `LIMIT 100` 分页
+- 🧹 **清理**: 删除空目录 `docs/` 和构建产物 `__pycache__/`、`smartshop_ai.egg-info/`
+
+---
+
 ## 📁 项目结构
 
 ```
 SmartShop-AI/
 ├── app.py                 # Flask 入口（路由/数据库/设置）
 ├── ai_client.py           # AI 客户端（对话/工具/RAG）
-├── settings.json          # 运行时配置（已 .gitignore）
+├── settings.json          # 运行时配置（已 .gitignore，建议用环境变量）
 ├── templates/
 │   └── index.html         # 页面模板
 ├── static/
 │   ├── app.js             # 前端逻辑（SSE/会话/主题）
-│   └── style.css          # 全局样式（暗色/亮色主题）
+│   └── style.css          # 全局样式（暗色/亮色双主题）
 ├── tools/                 # Function Calling 工具集
 │   ├── registry.py        # 工具注册中心
 │   ├── order_query.py     # 订单查询（模拟）
 │   ├── logistics_track.py # 物流追踪（模拟）
 │   ├── return_refund.py   # 退换货查询（模拟）
 │   ├── member_info.py     # 会员信息查询（模拟）
-│   ├── weather.py         # 天气查询（wttr.in）
-│   ├── calculator.py      # 安全计算器（AST）
+│   ├── weather.py         # 天气查询（wttr.in 免费 API）
+│   ├── calculator.py      # 安全计算器（AST 解析）
 │   ├── datetime_tool.py   # 日期时间（时区支持）
-│   ├── bing_search.py     # Bing 网页搜索
-│   └── duckduckgo_search.py # DuckDuckGo 搜索
+│   ├── bing_search.py     # Bing 网页搜索（HTML 解析）
+│   └── duckduckgo_search.py # DuckDuckGo 搜索（JSON API）
 ├── rag/                   # RAG 知识库模块
 │   ├── vector_store.py    # ChromaDB 封装
 │   ├── document_processor.py # 文档解析与分块

@@ -5,6 +5,7 @@
 
 import json
 import os
+from typing import Generator, Optional
 from openai import OpenAI
 from tools.registry import get_all_tools, execute_tool
 
@@ -28,7 +29,7 @@ def _set_vector_store(store):
     _vector_store = store
 
 
-def _retrieve_context(message, top_k=None, similarity_threshold=None):
+def _retrieve_context(message: str, top_k: int | None = None, similarity_threshold: float | None = None) -> str:
     """从知识库检索相关上下文。
 
     Args:
@@ -82,7 +83,7 @@ DEFAULT_MODEL = "deepseek-chat"
 MAX_TOOL_CALLS = 5
 
 
-def _load_settings():
+def _load_settings() -> dict:
     """从配置文件加载设置。"""
     if os.path.exists(SETTINGS_FILE):
         with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
@@ -90,7 +91,7 @@ def _load_settings():
     return {}
 
 
-def get_config():
+def get_config() -> tuple:
     """获取当前 API 配置，优先级：环境变量 > settings.json > 默认值。"""
     settings = _load_settings()
     api_key = os.environ.get("LLM_API_KEY") or settings.get("api_key") or DEFAULT_API_KEY
@@ -100,7 +101,7 @@ def get_config():
     return api_key, base_url, model, search_provider
 
 
-def create_client():
+def create_client() -> OpenAI:
     """根据当前配置创建 OpenAI 客户端。"""
     api_key, base_url, _, _ = get_config()
     if not api_key:
@@ -134,7 +135,7 @@ SYSTEM_PROMPT_TEMPLATE = (
 )
 
 
-def _build_system_prompt(context=""):
+def _build_system_prompt(context: str = "") -> str:
     """根据设置构建系统提示词，可选注入 RAG 上下文。"""
     settings = _load_settings()
     shop_name = settings.get("customer_service_name", "SmartShop")
@@ -160,15 +161,27 @@ def _build_system_prompt(context=""):
 SYSTEM_PROMPT = _build_system_prompt()
 
 
-def _filter_tools(search_provider):
-    """返回所有工具列表。电商客服场景不需要按搜索 provider 过滤。"""
-    return get_all_tools()
+def _filter_tools(search_provider: str = "bing") -> list:
+    """根据搜索提供商过滤工具列表。
+
+    Args:
+        search_provider: 搜索提供商 ("bing" 或 "duckduckgo")
+
+    Returns:
+        过滤后的工具列表
+    """
+    all_tools = get_all_tools()
+    if search_provider == "duckduckgo":
+        # 只保留 duckduckgo_search，过滤掉 web_search (bing)
+        return [t for t in all_tools if t["function"]["name"] != "web_search"]
+    # 默认使用 bing，过滤掉 duckduckgo_search
+    return [t for t in all_tools if t["function"]["name"] != "duckduckgo_search"]
 
 
 # ── 工具调用 ──────────────────────────────────────────────────────
 
-def _handle_tool_calls(messages, client, model, search_provider="bing"):
-    """处理工具调用循环。非流式，最多 5 轮。
+def _handle_tool_calls(messages: list, client: OpenAI, model: str, search_provider: str = "bing") -> str:
+    """处理工具调用循环。非流式，最多 5 轮，含去重检测。
 
     Args:
         messages: 对话消息列表（会被修改）
@@ -180,6 +193,7 @@ def _handle_tool_calls(messages, client, model, search_provider="bing"):
         str: AI 的最终回复内容，或错误信息
     """
     tools = _filter_tools(search_provider)
+    seen_calls = set()  # 去重检测
 
     for _ in range(MAX_TOOL_CALLS):
         response = client.chat.completions.create(
@@ -194,6 +208,15 @@ def _handle_tool_calls(messages, client, model, search_provider="bing"):
 
         if not message_obj.tool_calls:
             return message_obj.content or ""
+
+        # 去重检测：检查是否是重复调用
+        current_call_signatures = frozenset(
+            (tc.function.name, tc.function.arguments) for tc in message_obj.tool_calls
+        )
+        if current_call_signatures in seen_calls:
+            # 出现重复调用，跳出循环让模型直接回复
+            break
+        seen_calls.add(current_call_signatures)
 
         # 有工具调用，执行工具并追加到消息历史
         for tool_call in message_obj.tool_calls:
@@ -217,24 +240,38 @@ def _handle_tool_calls(messages, client, model, search_provider="bing"):
                 "content": result,
             })
 
-    return "抱歉，我遇到了一些问题，请稍后重试。"
+    # 达到最大轮次或出现重复调用后，让模型基于已有结果生成最终回复
+    try:
+        final = client.chat.completions.create(
+            model=model,
+            messages=messages,
+        )
+        return final.choices[0].message.content or "抱歉，我遇到了一些问题，请稍后重试。"
+    except Exception:
+        return "抱歉，我遇到了一些问题，请稍后重试。"
 
 
-def _supports_tool_calling(model):
+def _supports_tool_calling(model: str, model_presets: dict | None = None) -> bool:
     """判断模型是否支持工具调用。
 
-    根据已知信息判断，未知模型默认认为支持。
+    优先从 MODEL_PRESETS 配置中读取，未知模型默认认为支持。
     """
-    no_tools = [
-        "glm-4-flash", "moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k",
-        "qwen-long", "glm-4-air", "glm-4-airx",
-    ]
-    return model not in no_tools
+    if model_presets is None:
+        return True  # 无配置时默认支持
+    for preset in model_presets.values():
+        if model in preset.get("models", []):
+            return preset.get("supports_tools", True)
+    # 未知模型默认支持
+    return True
 
 
 # ── 主对话接口 ────────────────────────────────────────────────────
 
-def chat_stream(message, history=None):
+def chat_stream(
+    message: str,
+    history: Optional[list] = None,
+    model_presets: Optional[dict] = None,
+) -> Generator[str, None, None]:
     """流式对话接口。
 
     流程：
@@ -246,6 +283,7 @@ def chat_stream(message, history=None):
     Args:
         message: 用户最新消息
         history: 历史对话列表 [{"role": "user/assistant", "content": "..."}]
+        model_presets: 模型配置字典，用于判断工具调用支持
 
     Yields:
         str: AI 回复的增量文本
@@ -270,7 +308,7 @@ def chat_stream(message, history=None):
 
     # 第一阶段：处理工具调用（如果模型支持）
     tool_result = None
-    if _supports_tool_calling(model):
+    if _supports_tool_calling(model, model_presets):
         try:
             tool_result = _handle_tool_calls(messages, client, model, search_provider)
             # 工具调用成功且有内容，直接返回结果（分块 yield 模拟流式效果）

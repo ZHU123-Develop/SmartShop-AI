@@ -6,8 +6,10 @@ import sqlite3
 import time
 import uuid
 import mimetypes
+import threading
 from functools import wraps
-from flask import Flask, request, jsonify, render_template, Response, g, send_file
+from collections.abc import Callable
+from flask import Flask, request, jsonify, render_template, Response, g
 from ai_client import chat_stream, _set_vector_store
 
 app = Flask(__name__)
@@ -50,9 +52,10 @@ try:
                 print(f"⚠️ 加载样本知识库失败: {e}")
 except ImportError:
     # chromadb 未安装时静默跳过
+    print("ℹ️ chromadb 未安装，知识库功能不可用。如需使用，请执行: pip install chromadb")
     pass
-except Exception:
-    pass
+except Exception as e:
+    print(f"⚠️ 知识库初始化失败: {e}")
 
 # 跟踪正在进行的流式请求，用于停止生成
 active_streams = {}
@@ -62,21 +65,27 @@ _rate_limit_store = {}
 _RATE_LIMIT = 20  # 每分钟最多请求数
 
 
-def rate_limit(f):
-    """简易 IP 速率限制装饰器。"""
+# 速率限制锁
+_rate_limit_lock = threading.Lock()
+
+
+def rate_limit(f: Callable) -> Callable:
+    """简易 IP 速率限制装饰器（线程安全）。"""
     @wraps(f)
     def decorated(*args, **kwargs):
         ip = request.remote_addr or "unknown"
         now = time.time()
         window = 60  # 1 分钟窗口
 
-        # 清理过期记录
-        _rate_limit_store[ip] = [t for t in _rate_limit_store.get(ip, []) if now - t < window]
+        with _rate_limit_lock:
+            # 清理过期记录
+            _rate_limit_store[ip] = [t for t in _rate_limit_store.get(ip, []) if now - t < window]
 
-        if len(_rate_limit_store[ip]) >= _RATE_LIMIT:
-            return jsonify({"success": False, "error": "请求过于频繁，请稍后再试"}), 429
+            if len(_rate_limit_store[ip]) >= _RATE_LIMIT:
+                return jsonify({"success": False, "error": "请求过于频繁，请稍后再试"}), 429
 
-        _rate_limit_store[ip].append(now)
+            _rate_limit_store[ip].append(now)
+
         return f(*args, **kwargs)
     return decorated
 
@@ -140,7 +149,7 @@ MODEL_PRESETS = {
 
 
 # ========== SQLite 数据库 ==========
-def get_db():
+def get_db() -> sqlite3.Connection:
     """获取当前请求的数据库连接。"""
     if "db" not in g:
         g.db = sqlite3.connect(DB_FILE)
@@ -149,14 +158,14 @@ def get_db():
 
 
 @app.teardown_appcontext
-def close_db(exception):
+def close_db(exception: BaseException | None) -> None:
     """关闭数据库连接。"""
     db = g.pop("db", None)
     if db is not None:
         db.close()
 
 
-def init_db():
+def init_db() -> None:
     """初始化数据库表。"""
     db = sqlite3.connect(DB_FILE)
     db.execute("""
@@ -182,11 +191,19 @@ def init_db():
     db.close()
 
 
-def db_get_sessions():
-    """获取所有会话列表。"""
+def db_get_sessions(limit: int = 100):
+    """获取会话列表（最近 limit 条）。
+
+    Args:
+        limit: 返回最大数量，默认 100
+
+    Returns:
+        list[dict]: 会话列表
+    """
     db = get_db()
     rows = db.execute(
-        "SELECT id, title, created_at, updated_at FROM sessions ORDER BY updated_at DESC"
+        "SELECT id, title, created_at, updated_at FROM sessions ORDER BY updated_at DESC LIMIT ?",
+        (limit,)
     ).fetchall()
     return [dict(r) for r in rows]
 
@@ -338,7 +355,7 @@ def chat():
         stream_key = request_key
         try:
             full_reply = ""
-            for chunk in chat_stream(message, history):
+            for chunk in chat_stream(message, history, MODEL_PRESETS):
                 # 检查是否被要求停止
                 if active_streams.get(stream_key, {}).get("abort"):
                     # 如果已经收集到部分内容，发送停止事件
@@ -440,5 +457,16 @@ if __name__ == "__main__":
 
     # 初始化数据库（CLI 或首次启动时使用）
     init_db()
+
+    # 安全检查：提示 API Key 推荐使用环境变量而非 settings.json
+    settings = load_settings()
+    if settings.get("api_key"):
+        print("⚠️  检测到 settings.json 中包含 API Key")
+        print("   🔒 建议改用环境变量设置（更安全）:")
+        print("      PowerShell: $env:LLM_API_KEY='sk-...'")
+        print("      CMD:        set LLM_API_KEY=sk-...")
+        print("      设置后清空 settings.json 中的 api_key 字段")
+    elif not os.environ.get("LLM_API_KEY"):
+        print("ℹ️  未配置 API Key，请在左下角 ⚙️ 设置 中填写")
 
     app.run(debug=debug, host="0.0.0.0", port=5000)
